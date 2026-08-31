@@ -18,15 +18,15 @@ import { DXFManager } from '../../../../DXFLoader'
 import { Highlighter } from '../../../../Highlighter'
 import { IDSManager } from '../../../../IDSManager'
 import { ModelManager } from '../../../../ModelManager'
-import { PlacementEditor } from '../../../../Placement/PlacementEditor'
 import { markerActionsFor } from '../../../../Placement/markerActions'
+import { PlacementEditor } from '../../../../Placement/PlacementEditor'
 import { YAW_ONLY_PLACEMENT } from '../../../../Placement/placementTarget'
 import { objectTarget } from '../../../../Placement/targets/objectTarget'
 import { usePlacementSession } from '../../../../Placement/usePlacementSession'
 import { createFileMarker, removeMarker, type AddedFile } from '../../../../tools/AddToBim/src/FileMarkerUtils'
 
-import type { PlacementMode } from '../../../../Placement/PlacementEditor'
 import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
+import type { PlacementMode } from '../../../../Placement/PlacementEditor'
 import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 
 // Hoist options arrays so the array identity is stable across renders.

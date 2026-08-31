@@ -1503,8 +1503,7 @@
     "clipping": "Clipping Tool",
     "fit": "Fit",
     "add": "Add",
-    "share": "Share view",
-    "pointCloudAlign": "Point cloud"
+    "share": "Share view"
   },
   "forgotPassword": {
     "h1": "Forgot Password",
@@ -2098,27 +2097,6 @@
     "editHint": "Drag the gizmo to place it. The position is saved when you press Done.",
     "saved": "Saved the position of \"{name}\"",
     "saveFailed": "Could not save the position of \"{name}\""
-  },
-  "PointCloudAlignment": {
-    "title": "Align point cloud",
-    "position": "Position (m)",
-    "rotation": "Rotation (°)",
-    "scale": "Scale",
-    "modeTranslate": "Move",
-    "modeRotate": "Rotate",
-    "reset": "Reset",
-    "done": "Done",
-    "noClouds": "No point clouds are switched on",
-    "editHint": "Drag the gizmo to place the point cloud. The position is saved when you press Done.",
-    "saved": "Saved the position of \"{name}\"",
-    "saveFailed": "Could not save the position of \"{name}\"",
-    "centre": "Centre on scene origin",
-    "centreFailed": "The point cloud has not loaded enough to find its centre yet",
-    "pickPivot": "Pick centre point",
-    "pivotSet": "Turning about the picked point",
-    "pivotOrigin": "Reset to cloud origin",
-    "pickPivotHint": "Double-click to create the pivot point",
-    "pickPivotFailed": "Nothing under the cursor to pick"
   },
   "PointCloudSettings": {
     "title": "Point clouds",

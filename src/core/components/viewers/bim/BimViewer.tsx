@@ -29,7 +29,6 @@ import { PlacementEditor } from "./src/Placement/PlacementEditor";
 import { PlacementEditorHost } from "./src/Placement/PlacementEditorHost";
 import { BimPointClouds } from "./src/PointClouds";
 import { BimPointCloudSync } from "./src/PointClouds/BimPointCloudSync";
-import { PointCloudAlignment } from "./src/PointClouds/PointCloudAlignment";
 import { PropertiesMenu } from "./src/propertiesMenu";
 import { SelectionSync } from "./src/SelectionSync";
 import { ClippingPlanes } from "./src/tools/ClippingTool/ClippingPlanes";
@@ -126,7 +125,6 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
             components.get(FloorplanTool);
             components.get(ElevationsTool);
             components.get(BimPointClouds);
-            components.get(PointCloudAlignment);
             components.get(PlacementEditor);
 
             // Grid injection is safe here — fragments.core is initialized.

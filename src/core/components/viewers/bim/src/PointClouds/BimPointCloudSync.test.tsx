@@ -16,10 +16,8 @@ import { PlacementEditor } from '../Placement/PlacementEditor'
 
 import { BimPointCloudSync } from './BimPointCloudSync'
 
-import { PointCloudAlignment } from './PointCloudAlignment'
 import { PLACEMENT_VERSION } from './pointCloudPlacementStore'
 
-import type { AlignmentState } from './PointCloudAlignment'
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
 
 const { clouds, fileHooks } = vi.hoisted(() => {
@@ -50,7 +48,6 @@ const { clouds, fileHooks } = vi.hoisted(() => {
 })
 
 vi.mock('./index', () => ({ BimPointClouds: class {} }))
-vi.mock('./PointCloudAlignment', () => ({ PointCloudAlignment: class {} }))
 vi.mock('../Placement/PlacementEditor', () => ({ PlacementEditor: class {} }))
 vi.mock('../BimMeasurements/BimMeasurementManager', () => ({ BimMeasurementManager: class {} }))
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string, values?: { name?: string }) => `${key}:${values?.name ?? ''}` }))
@@ -91,12 +88,10 @@ function newAlignment() {
 }
 
 let placement = newAlignment()
-let alignment = newAlignment()
 let measurements = newMeasurements()
 
 const bimComponents = {
   get: (Ctor: unknown) => {
-    if (Ctor === PointCloudAlignment) return alignment
     if (Ctor === PlacementEditor) return placement
     if (Ctor === BimMeasurementManager) return measurements
     return clouds
@@ -116,7 +111,6 @@ function renderSync(pointCloudIds: string[], pointcloudApiUrl?: string) {
 }
 
 beforeEach(() => {
-  alignment = newAlignment()
   placement = newAlignment()
   measurements = newMeasurements()
 })

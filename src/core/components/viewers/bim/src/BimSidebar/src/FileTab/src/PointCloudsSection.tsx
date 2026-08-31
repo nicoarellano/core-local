@@ -25,7 +25,7 @@ import type { FileAction } from '../../../../../../../../types/global'
 /** Same set the BIM models offer. No download — a scan is not handed out to viewers. */
 const OPTIONS: FileAction[] = ['view', 'ghost', 'move', 'info', 'delete']
 
-const TOAST_ID = 'bim-pointcloud-align-toast'
+const TOAST_ID = 'bim-pointcloud-placement-toast'
 
 interface PointCloudsSectionProps {
   files: DbFile[]
@@ -35,7 +35,7 @@ interface PointCloudsSectionProps {
 
 export function PointCloudsSection({ files, query = '', buildingId }: PointCloudsSectionProps) {
   const t = useTranslations('PointCloudManagement')
-  const tAlign = useTranslations('PointCloudAlignment')
+  const tAlign = useTranslations('Placement')
 
   const { state, dispatch } = React.useContext(BimContext)
   const { bimComponents, pointCloudIds } = state.bim

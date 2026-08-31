@@ -21,7 +21,7 @@ import type { PlacementTarget } from '../placementTarget'
  * cloud is being placed and reports the outcome of the write.
  */
 export function usePointCloudTarget() {
-  const t = useTranslations('PointCloudAlignment')
+  const t = useTranslations('Placement')
 
   const [movingId, setMovingId] = React.useState<number | null>(null)
   const { updateFile } = useFile(movingId)
