@@ -21,8 +21,8 @@ import { useBimPointCloudOpacity } from '../../../../PointClouds/useBimPointClou
 import type { DbFile } from '../../../../../../../../types/dbTypes'
 import type { FileAction } from '../../../../../../../../types/global'
 
-/** Same set the BIM models offer, plus the download a scan is usually wanted for. */
-const OPTIONS: FileAction[] = ['view', 'ghost', 'move', 'download', 'info', 'delete']
+/** Same set the BIM models offer. No download — a scan is not handed out to viewers. */
+const OPTIONS: FileAction[] = ['view', 'ghost', 'move', 'info', 'delete']
 
 const TOAST_ID = 'bim-pointcloud-align-toast'
 
