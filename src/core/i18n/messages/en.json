@@ -2077,6 +2077,28 @@
     "userReadOnly": "You can see which plugins are available, but not change what runs.",
     "loading": "Loading plugins…"
   },
+  "Placement": {
+    "title": "Place object",
+    "position": "Position (m)",
+    "rotation": "Rotation (°)",
+    "yaw": "Rotation (°)",
+    "scale": "Scale",
+    "modeTranslate": "Move",
+    "modeRotate": "Rotate",
+    "modeScale": "Scale",
+    "reset": "Reset",
+    "done": "Done",
+    "centre": "Centre on scene origin",
+    "centreFailed": "This has not loaded enough to find its centre yet",
+    "pickPivot": "Pick centre point",
+    "pivotSet": "Turning about the picked point",
+    "pivotOrigin": "Reset to its own origin",
+    "pickPivotHint": "Double-click to create the pivot point",
+    "pickPivotFailed": "Nothing under the cursor to pick",
+    "editHint": "Drag the gizmo to place it. The position is saved when you press Done.",
+    "saved": "Saved the position of \"{name}\"",
+    "saveFailed": "Could not save the position of \"{name}\""
+  },
   "PointCloudAlignment": {
     "title": "Align point cloud",
     "position": "Position (m)",

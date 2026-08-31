@@ -25,6 +25,8 @@ import { createBimWorld } from "./src/lib/createBimWorld";
 
 import { ViewModeCoordinator } from "./src/lib/ViewModeCoordinator";
 import { ModelsSync } from "./src/ModelsSync";
+import { PlacementEditor } from "./src/Placement/PlacementEditor";
+import { PlacementEditorHost } from "./src/Placement/PlacementEditorHost";
 import { BimPointClouds } from "./src/PointClouds";
 import { BimPointCloudSync } from "./src/PointClouds/BimPointCloudSync";
 import { PointCloudAlignment } from "./src/PointClouds/PointCloudAlignment";
@@ -125,6 +127,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
             components.get(ElevationsTool);
             components.get(BimPointClouds);
             components.get(PointCloudAlignment);
+            components.get(PlacementEditor);
 
             // Grid injection is safe here — fragments.core is initialized.
             if (grid) {
@@ -241,6 +244,7 @@ export function BimViewer({ pointcloudApiUrl }: { pointcloudApiUrl?: string }) {
             <ModelsSync />
             <BuildingLocationSync />
             <BimPointCloudSync pointcloudApiUrl={pointcloudApiUrl} />
+            <PlacementEditorHost />
             <SelectionSync />
             <div
                 className="bim-container"

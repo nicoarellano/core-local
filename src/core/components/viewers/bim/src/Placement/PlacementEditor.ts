@@ -12,10 +12,10 @@ import { ViewModeCoordinator } from '../lib/ViewModeCoordinator'
 
 import { narrowPlacement } from './placementTarget'
 
-import type { ScenePickSource } from '../lib/scenePicker'
-import type { ExclusiveViewTool } from '../lib/ViewModeCoordinator'
 import type { PlacementCapabilities, PlacementTarget } from './placementTarget'
 import type { PointCloudPlacement } from '../../../shared/pointcloud/pointCloudPlacement'
+import type { ScenePickSource } from '../lib/scenePicker'
+import type { ExclusiveViewTool } from '../lib/ViewModeCoordinator'
 
 export type PlacementMode = 'translate' | 'rotate' | 'scale'
 
@@ -46,6 +46,7 @@ export interface PlacementState {
   id: string
   name: string
   capabilities: PlacementCapabilities
+  mode: PlacementMode
   placement: PointCloudPlacement
   /** What rotation and scale turn about, or null for the target's own origin. */
   pivot: THREE.Vector3 | null
@@ -79,7 +80,7 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
   private proxyBase: PointCloudPlacement | null = null
   private draggingProxy = false
   /** GizmoController.attach always starts in translate, so the live mode has to be re-applied. */
-  private mode: PlacementMode = 'translate'
+  private currentMode: PlacementMode = 'translate'
 
   constructor(components: OBC.Components) {
     super(components)
@@ -101,6 +102,10 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
 
   get activeTarget(): PlacementTarget | null {
     return this.target
+  }
+
+  get mode(): PlacementMode {
+    return this.currentMode
   }
 
   get capabilities(): PlacementCapabilities | null {
@@ -133,16 +138,19 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
     return true
   }
 
-  async begin(target: PlacementTarget): Promise<boolean> {
+  async begin(target: PlacementTarget, mode: PlacementMode = 'translate'): Promise<boolean> {
     if (!this.coordinator || !this.createGizmo) return false
     if (!target.object()) return false
-    if (this.target?.id === target.id) return true
+    if (this.target?.id === target.id) {
+      this.setMode(mode)
+      return true
+    }
 
     this.end()
     await this.coordinator.claim(this)
 
     this.target = target
-    this.mode = 'translate'
+    this.currentMode = mode
     this.snapshot = { ...target.read() }
     this.reattachGizmo()
     this.publish()
@@ -150,8 +158,9 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
   }
 
   setMode(mode: PlacementMode) {
-    this.mode = mode
+    this.currentMode = mode
     this.gizmo?.setMode(mode)
+    this.publish()
   }
 
   setPlacement(placement: PointCloudPlacement) {
@@ -187,7 +196,7 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
 
     const placement = this.placement()
     const committed = placement
-      ? { id: target.id, name: target.name, capabilities: target.capabilities, placement, pivot: this.pivot }
+      ? { id: target.id, name: target.name, capabilities: target.capabilities, mode: this.currentMode, placement, pivot: this.pivot }
       : null
 
     const coordinator = this.coordinator
@@ -247,7 +256,7 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
 
     if (!this.pivotPoint) {
       this.gizmo.attach(root)
-      this.gizmo.setMode(this.mode)
+      this.gizmo.setMode(this.currentMode)
       return
     }
 
@@ -258,7 +267,7 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
     this.proxy = proxy
     this.proxyBase = { ...(this.target?.read() as PointCloudPlacement) }
     this.gizmo.attach(proxy)
-    this.gizmo.setMode(this.mode)
+    this.gizmo.setMode(this.currentMode)
   }
 
   /** Puts the proxy back on the pivot, so the next drag measures from where the target now is. */
@@ -308,6 +317,7 @@ export class PlacementEditor extends OBC.Component implements OBC.Disposable, Ex
       id: target.id,
       name: target.name,
       capabilities: target.capabilities,
+      mode: this.currentMode,
       placement,
       pivot: this.pivot,
     })

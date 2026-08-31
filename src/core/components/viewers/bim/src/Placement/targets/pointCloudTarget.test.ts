@@ -86,4 +86,29 @@ describe('pointCloudTarget', () => {
       }),
     })
   })
+  it('skips the write when nothing actually moved', async () => {
+    const clouds = stubClouds()
+    const updateFile = vi.fn().mockResolvedValue(undefined)
+    const stored = { ...DEFAULT_PLACEMENT, position: [1, 1, 1] as [number, number, number] }
+    const target = pointCloudTarget({
+      id: '669', name: 'scan', clouds: clouds as never, updateFile, storedPlacement: () => stored,
+    })
+
+    await target.commit({ ...stored })
+
+    expect(updateFile).not.toHaveBeenCalled()
+  })
+
+  it('writes when the placement differs from what is stored', async () => {
+    const clouds = stubClouds()
+    const updateFile = vi.fn().mockResolvedValue(undefined)
+    const target = pointCloudTarget({
+      id: '669', name: 'scan', clouds: clouds as never, updateFile,
+      storedPlacement: () => ({ ...DEFAULT_PLACEMENT }),
+    })
+
+    await target.commit({ ...DEFAULT_PLACEMENT, position: [2, 0, 0] })
+
+    expect(updateFile).toHaveBeenCalled()
+  })
 })

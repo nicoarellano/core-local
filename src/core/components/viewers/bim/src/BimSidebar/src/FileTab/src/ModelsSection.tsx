@@ -7,17 +7,19 @@ import * as LR from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
-import { useUploadFileToBuilding, useDeleteFile, useFile } from '../../../../../../../../hooks/files/files'
+import { useUploadFileToBuilding, useDeleteFile } from '../../../../../../../../hooks/files/files'
 import { BimContext, BuildingsContext } from '../../../../../../../../store'
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
-import { GizmoController } from '../../../../../utils/GizmoController'
 import { BIMManager } from '../../../../BIMManager'
 import { CurrentWorld } from '../../../../CurrentWorld'
 import { GhostMode } from '../../../../GhostMode'
 import { Highlighter } from '../../../../Highlighter'
 import { ModelManager } from '../../../../ModelManager'
+import { PlacementEditor } from '../../../../Placement/PlacementEditor'
+import { useModelTarget } from '../../../../Placement/targets/useModelTarget'
+import { usePlacementSession } from '../../../../Placement/usePlacementSession'
 import { SpatialStructure } from '../../../../SpatialStructure'
 
 import type { DbFile as DbFile } from '../../../../../../../../types/dbTypes'
@@ -114,14 +116,10 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
     }
   }, [bimComponents])
 
-  // Gizmo controllers keyed by model's file.name (one gizmo per model at most)
-  const gizmoControllersRef = React.useRef<Map<string, GizmoController>>(new Map())
+  const { targetFor, clearMoving } = useModelTarget()
 
-  // Track the file ID currently being repositioned so useFile can provide updateFile
-  const [moveFileId, setMoveFileId] = React.useState<number | null>(null)
-  const { updateFile } = useFile(moveFileId)
-  const updateFileRef = React.useRef(updateFile)
-  React.useEffect(() => { updateFileRef.current = updateFile }, [updateFile])
+  const placementSession = usePlacementSession()
+  React.useEffect(() => { if (!placementSession) clearMoving() }, [placementSession, clearMoving])
 
   // Get Highlighter from BIM components
   const highlighter = React.useMemo(() => {
@@ -199,47 +197,19 @@ export function ModelsSection({ files, query = '' }: ModelsSectionProps) {
   const handleBimMove = React.useCallback((file: DbFile) => {
     if (!bimComponents || !fragments) return
 
-    const world = bimComponents.get(CurrentWorld).world
-    if (!world) return
+    const editor = bimComponents.get(PlacementEditor)
+    if (editor.activeId === String(file.id)) {
+      editor.accept()
+      return
+    }
 
-    const fragModel = fragments.core.models.list.get(file.name)
-    if (!fragModel) {
+    if (!fragments.core.models.list.get(file.name)) {
       console.warn(`[BimMove] Model not found: "${file.name}"`)
       return
     }
 
-    const existing = gizmoControllersRef.current.get(file.name)
-    if (existing) {
-      // Toggle off: destroy the gizmo
-      existing.dispose()
-      gizmoControllersRef.current.delete(file.name)
-      if (gizmoControllersRef.current.size === 0 && highlighter) highlighter.enabled = true
-    } else {
-      // Toggle on: create a new gizmo attached to the model's root object
-      const gizmo = new GizmoController(world)
-      const cleanupGizmo = (savePosition: boolean) => {
-        if (savePosition) {
-          const { x, y, z } = fragModel.object.position
-          const rotation = fragModel.object.rotation.y
-          updateFileRef.current({ x, y, z, bimRotation: rotation } as any)
-            .catch((err: unknown) => console.error(`[BimMove] Failed to save position for "${file.name}":`, err))
-          file.x = x
-          file.y = y
-          file.z = z
-          file.bimRotation = rotation
-        }
-        gizmoControllersRef.current.delete(file.name)
-        if (gizmoControllersRef.current.size === 0 && highlighter) highlighter.enabled = true
-        setMoveFileId(null)
-      }
-      gizmo.onAccept = () => cleanupGizmo(true)
-      gizmo.onCancel = () => cleanupGizmo(false)
-      setMoveFileId(file.id)
-      if (highlighter) highlighter.enabled = false
-      gizmo.attach(fragModel.object)
-      gizmoControllersRef.current.set(file.name, gizmo)
-    }
-  }, [bimComponents, fragments, highlighter])
+    void editor.begin(targetFor(file, () => fragments.core.models.list.get(file.name)?.object ?? null))
+  }, [bimComponents, fragments, targetFor])
 
   const handleBimGhost = React.useCallback((file: DbFile, ghostState: boolean) => {
     if (!fragments || !ghostMode) return

@@ -6,10 +6,10 @@ import * as THREE from 'three'
 import { DEFAULT_PLACEMENT } from '../../../../shared/pointcloud/pointCloudPlacement'
 import { YAW_ONLY_PLACEMENT } from '../placementTarget'
 
-import type { PlacementTarget } from '../placementTarget'
 import type { DbFile } from '../../../../../../types/dbTypes'
+import type { PlacementTarget } from '../placementTarget'
 
-export interface FragmentModelTargetSetup {
+export interface ObjectTargetSetup {
   id: string
   name: string
   object: () => THREE.Object3D | null
@@ -17,10 +17,10 @@ export interface FragmentModelTargetSetup {
 }
 
 /**
- * Placement for a loaded fragment model or scene object. `DbFile` has no scale and no
- * pitch/roll, so only position and yaw survive a save.
+ * Placement for anything that is one `Object3D` backed by a `DbFile` — a fragment model, a
+ * loaded GLB, a DXF group. No scale and no pitch/roll column, so only position and yaw save.
  */
-export function fragmentModelTarget({ id, name, object, updateFile }: FragmentModelTargetSetup): PlacementTarget {
+export function objectTarget({ id, name, object, updateFile }: ObjectTargetSetup): PlacementTarget {
   return {
     id,
     name,

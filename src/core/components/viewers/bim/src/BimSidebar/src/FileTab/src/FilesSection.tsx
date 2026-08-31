@@ -11,7 +11,6 @@ import { BimContext, BuildingsContext, MenusContext } from '../../../../../../..
 import ConfirmDialog from '../../../../../../../ConfirmDialog'
 import { CollapsibleSection } from '../../../../../../../ui/CollapsibleSection'
 import { useFileUploadHandler, useFileDeleteHandler, FileItemComponent, useFileActions, useCommonFileUpload } from '../../../../../../../ui/FilesManager'
-import { GizmoController } from '../../../../../utils/GizmoController'
 import { BCFTopicsManager } from '../../../../BCFTopicsManager'
 import { CurrentWorld } from '../../../../CurrentWorld'
 import { Cursor } from '../../../../Cursor'
@@ -19,8 +18,14 @@ import { DXFManager } from '../../../../DXFLoader'
 import { Highlighter } from '../../../../Highlighter'
 import { IDSManager } from '../../../../IDSManager'
 import { ModelManager } from '../../../../ModelManager'
+import { PlacementEditor } from '../../../../Placement/PlacementEditor'
+import { markerActionsFor } from '../../../../Placement/markerActions'
+import { YAW_ONLY_PLACEMENT } from '../../../../Placement/placementTarget'
+import { objectTarget } from '../../../../Placement/targets/objectTarget'
+import { usePlacementSession } from '../../../../Placement/usePlacementSession'
 import { createFileMarker, removeMarker, type AddedFile } from '../../../../tools/AddToBim/src/FileMarkerUtils'
 
+import type { PlacementMode } from '../../../../Placement/PlacementEditor'
 import type { DbFile as IFile } from '../../../../../../../../types/dbTypes'
 import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 
@@ -181,11 +186,16 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     }
   }, [dxfManager, bimComponents])
 
-  // Gizmo controllers keyed by file name (one gizmo per file at most)
-  const gizmoControllersRef = React.useRef<Map<string, GizmoController>>(new Map())
+  // Read by the marker rAF loop, so it hides the marker of whatever is being placed.
+  const placingIdRef = React.useRef<string | null>(null)
 
   // Track the file ID currently being repositioned so useFile can provide updateFile
   const [moveFileId, setMoveFileId] = React.useState<number | null>(null)
+  const placementSession = usePlacementSession()
+  React.useEffect(() => {
+    placingIdRef.current = placementSession?.id ?? null
+    if (!placementSession) setMoveFileId(null)
+  }, [placementSession])
   const { updateFile } = useFile(moveFileId)
   const updateFileRef = React.useRef(updateFile)
   React.useEffect(() => { updateFileRef.current = updateFile }, [updateFile])
@@ -404,36 +414,20 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
     return modelManager?.getModelByName(file.name)?.model ?? null
   }, [modelManager])
 
-  // Attach a transform gizmo to a placed object (or re-set its mode); saves on accept.
-  const editObject = React.useCallback((file: IFile, mode: 'translate' | 'rotate' | 'scale' = 'translate') => {
+  const editObject = React.useCallback((file: IFile, mode: PlacementMode = 'translate') => {
     if (!bimComponents) return
-    const world = bimComponents.get(CurrentWorld).world
-    if (!world) return
-    const obj = getSceneObject(file)
-    if (!obj) return
+    if (!getSceneObject(file)) return
 
-    const key = file.id.toString()
-    const existing = gizmoControllersRef.current.get(key)
-    if (existing) { existing.setMode(mode); return }
-
-    const gizmo = new GizmoController(world)
-    const cleanup = (save: boolean) => {
-      if (save) {
-        const { x, y, z } = obj.position
-        const rotation = obj.rotation.y
-        updateFileRef.current({ x, y, z, bimRotation: rotation } as any)
-          .catch((err: unknown) => console.error(`Failed to save position for "${file.name}":`, err))
-        file.x = x; file.y = y; file.z = z; file.bimRotation = rotation
-      }
-      gizmoControllersRef.current.delete(key)
-      setMoveFileId(null)
-    }
-    gizmo.onAccept = () => cleanup(true)
-    gizmo.onCancel = () => cleanup(false)
-    gizmo.setMode(mode)
     setMoveFileId(file.id)
-    gizmo.attach(obj)
-    gizmoControllersRef.current.set(key, gizmo)
+    void bimComponents.get(PlacementEditor).begin(objectTarget({
+      id: file.id.toString(),
+      name: file.name,
+      object: () => getSceneObject(file),
+      updateFile: async (patch) => {
+        Object.assign(file, patch)
+        await updateFileRef.current(patch as never)
+      },
+    }), mode)
   }, [bimComponents, getSceneObject])
 
   // Move handler: unplaced files → click-to-place; placed files → gizmo (load DXF first if needed)
@@ -552,7 +546,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
       const marker = createFileMarker(makeMarkerInput(file, obj.position.clone()), obj, world, (action) => {
         if (action === 'delete') { void handleAction('delete', file); return }
         editObject(file, action === 'move' ? 'translate' : action)
-      })
+      }, markerActionsFor(YAW_ONLY_PLACEMENT))
       if (marker) markersRef.current.set(key, { marker, file })
     }
   }, [localFiles, loadedTick, bimComponents, getSceneObject, editObject, handleAction, makeMarkerInput])
@@ -568,7 +562,7 @@ export function FilesSection({ files, query = '' }: FilesSectionProps) {
         if (!obj) { marker.visible = false; return }
         obj.getWorldPosition(worldPos)
         marker.position.set(worldPos.x, worldPos.y + 0.2, worldPos.z)
-        marker.visible = !gizmoControllersRef.current.has(key)
+        marker.visible = placingIdRef.current !== key
       })
       raf = requestAnimationFrame(tick)
     }

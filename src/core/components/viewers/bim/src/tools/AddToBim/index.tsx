@@ -15,7 +15,6 @@ import { BimContext } from "../../../../../../store/BIM/context"
 import { ViewerNames } from "../../../../../../types/dbTypes"
 import { Button, useSidebar } from "../../../../../ui"
 import { CommentInput } from "../../../../../ui/Comments/CommentInput"
-import { ViewerContextMenu } from "../../../../../ui/FilesManager"
 import { SensorDetailDialog } from "../../../../../ui/Sensors/SensorDetailDialog"
 import { SensorInput } from "../../../../../ui/Sensors/SensorInput"
 import { FileAdderDialog } from "../../../../map/src/tools/AddTools/AddFile/FileAdder"
@@ -28,7 +27,6 @@ import { useFilePlacement } from "./src/useFilePlacement"
 import { useSensorMarkers } from "./src/useSensorMarkers"
 
 import type { DbFile } from "../../../../../../types/dbTypes"
-import type { FileAction } from "../../../../../../types/global"
 import type { Tool, ToolbarToolType } from "../../../../../../types/tools"
 import type { FileMarkerAction } from "../../../../../ui/FilesManager/src/FileMarker"
 import type { BimToolbarToolsType } from "../bimToolbar"
@@ -83,7 +81,6 @@ export default function AddToBim({ tool }: AddToBimProps) {
   const [addingMode, setAddingMode] = React.useState<BimToolbarToolsType>(null)
 
   // Context menu state for right-click on BIM scene objects
-  const [contextMenu, setContextMenu] = React.useState<{ x: number; y: number; file: DbFile } | null>(null)
 
   // Extracted hooks
   const { addPendingComment, removePendingComment, commentCount } = useCommentMarkers(world, buildingId)
@@ -129,39 +126,6 @@ export default function AddToBim({ tool }: AddToBimProps) {
   }, [world])
 
   // Canvas-level right-click: raycast to detect hit, show context menu
-  React.useEffect(() => {
-    if (!world || !fragments) return
-    const canvas = world.renderer?.three?.domElement
-    if (!canvas) return
-
-    const handleContextMenu = async (e: MouseEvent) => {
-      // Prevent the browser default menu immediately, regardless of what we hit
-      e.preventDefault()
-
-      const mouse = new (await import("three")).Vector2(e.clientX, e.clientY)
-      const result = await filePlacement.raycast({
-        camera: world.camera.three,
-        mouse,
-        dom: canvas,
-      })
-
-      // Try to identify which file was hit by matching model names in fragments
-      const hitModelId = (result as any)?.modelId ?? (result as any)?.fragments?.modelId
-      const matchedFile = hitModelId
-        ? filesDataRef.current.find(f => f.name === hitModelId)
-        : null
-
-      setContextMenu({
-        x: e.clientX,
-        y: e.clientY,
-        file: matchedFile ?? { id: 0, name: t('bimObject'), url: "", type: "bim-file" } as DbFile,
-      })
-    }
-
-    canvas.addEventListener("contextmenu", handleContextMenu)
-    return () => canvas.removeEventListener("contextmenu", handleContextMenu)
-  }, [world, fragments, filePlacement.raycast])
-
   // Allow other UI to trigger AddToBim modes via currentToolId
   const { currentToolId } = toolsState.tools
   React.useEffect(() => {
@@ -201,10 +165,6 @@ export default function AddToBim({ tool }: AddToBimProps) {
     setOpenInfo(true)
     menusDispatch({ type: "SET_SIDEBAR_SELECTED_TAB", payload: { selectedTab: "sensors" } })
   }, [setOpenInfo, menusDispatch])
-
-  const handleContextMenuAction = React.useCallback((_action: FileAction, _file: DbFile) => {
-    openFileTab()
-  }, [openFileTab])
 
   return (
     <>
@@ -328,17 +288,6 @@ export default function AddToBim({ tool }: AddToBimProps) {
         />
       )}
 
-      {/* Right-click context menu on BIM scene objects */}
-      {contextMenu && (
-        <ViewerContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          file={contextMenu.file}
-          options={['view', 'move', 'delete']}
-          onAction={handleContextMenuAction}
-          onClose={() => setContextMenu(null)}
-        />
-      )}
     </>
   )
 }

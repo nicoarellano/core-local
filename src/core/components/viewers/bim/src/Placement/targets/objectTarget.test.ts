@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_PLACEMENT } from '../../../../shared/pointcloud/pointCloudPlacement'
 
-import { fragmentModelTarget } from './fragmentModelTarget'
+import { objectTarget } from './objectTarget'
 
 function stubModel() {
   const object = new THREE.Group()
@@ -18,7 +18,7 @@ function stubModel() {
 
 function setUp(object: THREE.Object3D | null = stubModel()) {
   const updateFile = vi.fn().mockResolvedValue(undefined)
-  const target = fragmentModelTarget({
+  const target = objectTarget({
     id: '12',
     name: 'tower.frag',
     object: () => object,
@@ -27,7 +27,7 @@ function setUp(object: THREE.Object3D | null = stubModel()) {
   return { target, updateFile, object }
 }
 
-describe('fragmentModelTarget', () => {
+describe('objectTarget', () => {
   it('can save yaw and position only, matching the File columns', () => {
     const { target } = setUp()
 

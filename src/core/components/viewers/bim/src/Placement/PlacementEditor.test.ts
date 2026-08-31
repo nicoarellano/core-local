@@ -594,3 +594,59 @@ describe('PlacementEditor centre on origin', () => {
     expect(targets.get('669')?.placement.position).toEqual([0, 0, 0])
   })
 })
+
+describe('PlacementEditor opening mode', () => {
+  it('starts in the mode the caller asked for, not the one attach resets to', async () => {
+    const { editor, gizmo, handles } = setUp()
+
+    await editor.begin(handles['669'], 'rotate')
+
+    expect(gizmo.mode).toBe('rotate')
+  })
+
+  it('opens in scale when asked', async () => {
+    const { editor, gizmo, handles } = setUp()
+
+    await editor.begin(handles['669'], 'scale')
+
+    expect(gizmo.mode).toBe('scale')
+  })
+
+  it('still defaults to move', async () => {
+    const { editor, gizmo, begin } = setUp()
+
+    await begin('669')
+
+    expect(gizmo.mode).toBe('translate')
+  })
+
+  it('publishes the mode, so the card cannot disagree with the gizmo', async () => {
+    const { editor, handles } = setUp()
+    const changed = vi.fn()
+    editor.onChanged.add(changed)
+
+    await editor.begin(handles['669'], 'rotate')
+
+    expect(changed).toHaveBeenCalledWith(expect.objectContaining({ mode: 'rotate' }))
+  })
+
+  it('publishes a later mode change too', async () => {
+    const { editor, begin } = setUp()
+    await begin('669')
+    const changed = vi.fn()
+    editor.onChanged.add(changed)
+
+    editor.setMode('scale')
+
+    expect(changed).toHaveBeenCalledWith(expect.objectContaining({ mode: 'scale' }))
+  })
+
+  it('keeps the asked-for mode when a pivot rebuilds the gizmo', async () => {
+    const { editor, gizmo, handles } = setUp()
+    await editor.begin(handles['669'], 'rotate')
+
+    editor.setPivot(new THREE.Vector3(1, 2, 3))
+
+    expect(gizmo.mode).toBe('rotate')
+  })
+})
